@@ -12,13 +12,12 @@ from itertools import product
 import multiprocessing
 import pymongo
 
-from Back_test.vtGlobal import globalSetting
-from Back_test.vtObject import VtTickData, VtBarData
+#from Back_test.vtGlobal import globalSetting
+from Back_test.vtObject import VtTickData, VtBarData,VtOrderData ,VtTradeData
 from Back_test.vtConstant import *
-from Back_test.vtGateway import VtOrderData, VtTradeData
+#from Back_test.vtGateway import VtOrderData, VtTradeData
 
 from Back_test.ctaBase import *
-
 
 ########################################################################
 class BacktestingEngine(object):
@@ -123,13 +122,13 @@ class BacktestingEngine(object):
         self.symbol = symbol
 
     # ----------------------------------------------------------------------
-    def loadHistoryData(self):
-        """载入历史数据"""
-        # self.dbClient = pymongo.MongoClient(globalSetting['mongoHost'], globalSetting['mongoPort'])
-        # collection = self.dbClient[self.dbName][self.symbol]
+
+    #-----------------------------------------------------------------------
+    def setDatafile(self,file_name , symbol):
+        self.symbol = symbol
         import csv
         self.output(u'开始载入数据')
-
+        self.dbCursor = []
         # 首先根据回测模式，确认要使用的数据类
         if self.mode == self.BAR_MODE:
             dataClass = VtBarData
@@ -138,41 +137,12 @@ class BacktestingEngine(object):
             dataClass = VtTickData
             func = self.newTick
 
-        # 载入回测数据
-
-        self.dbCursor = []
-        #   读取csv数据并储存到数据库中
-        reader = csv.DictReader(file('D:\\vnpy\\examples\\CtaBacktesting\\IF0000_1min.csv', 'r'))
-        for d in reader:
-            bar = VtBarData()
-            bar.vtSymbol = 'IF0000'
-            bar.symbol = 'IF0000'
-            bar.open = float(d['Open'])
-            bar.high = float(d['High'])
-            bar.low = float(d['Low'])
-            bar.close = float(d['Close'])
-            bar.date = datetime.strptime(d['Date'], '%Y-%m-%d').strftime('%Y%m%d')
-            bar.time = d['Time']
-            bar.datetime = datetime.strptime(bar.date + ' ' + bar.time, '%Y%m%d %H:%M:%S')
-            bar.volume = d['TotalVolume']
-
-            flt = {'datetime': bar.datetime}
-            self.dbCursor.append(bar)
-
-            #    self.dbCursor =
-
-        self.output(u'载入完成，数据量：%s' % len(self.dbCursor))
-    #-----------------------------------------------------------------------
-    def setDatafile(self,file_name , file_type = 'bar'):
-        import csv
-        self.output(u'开始载入数据')
-        self.dbCursor = []
-        if file_type == 'bar':
+        if self.mode== 'bar':
             reader = csv.DictReader(file(file_name, 'r'))
             for d in reader:
                 bar = VtBarData()
-                bar.vtSymbol = 'IF0000'
-                bar.symbol = 'IF0000'
+                bar.vtSymbol = self.symbol
+                bar.symbol = self.symbol
                 bar.open = float(d['Open'])
                 bar.high = float(d['High'])
                 bar.low = float(d['Low'])
@@ -183,64 +153,68 @@ class BacktestingEngine(object):
                 bar.volume = d['TotalVolume']
                 self.dbCursor.append(bar)
 # 当回测类型为tick格式
-        elif file_type == 'tick':
+        elif self.mode == 'tick':
             reader = csv.DictReader(file(file_name, 'r'))
             for d in reader:
                 tick = VtTickData()
-                tick.symbol = EMPTY_STRING  # 合约代码
+                tick.symbol = self.symbol  # 合约代码
                 tick.exchange = EMPTY_STRING  # 交易所代码
-                tick.vtSymbol = EMPTY_STRING  # 合约在vt系统中的唯一代码，通常是 合约代码.交易所代码
+                tick.vtSymbol = self.symbol # 合约在vt系统中的唯一代码，通常是 合约代码.交易所代码
 
                 # 成交数据
-                tick.lastPrice = EMPTY_FLOAT  # 最新成交价
-                tick.lastVolume = EMPTY_INT  # 最新成交量
-                tick.volume = EMPTY_INT  # 今天总成交量
-                tick.openInterest = EMPTY_INT  # 持仓量
-                tick.time = EMPTY_STRING  # 时间 11:20:56.5
-                tick.date = EMPTY_STRING  # 日期 20151009
-                tick.datetime = None  # python的datetime时间对象
+                tick.lastPrice = float(d['lastPrice'])  # 最新成交价
+                tick.lastVolume= float(d['lastVolume'] )# 最新成交量
+                tick.volume = float(d['TotalVolume'])  # 今天总成交量
+                tick.openInterest = float(d['HoldChange']) # 持仓量
+                tick.time = d['Time']  # 时间 11:20:56.5
+                tick.date = d['Date']  # 日期 20151009
+                tick.datetime = datetime.strptime(d['Date']+' '+d['Time'], '%Y-%m-%d %H:%M:%S') # python的datetime时间对象
 
                 # 常规行情
                 tick.openPrice = EMPTY_FLOAT  # 今日开盘价
                 tick.highPrice = EMPTY_FLOAT  # 今日最高价
                 tick.lowPrice = EMPTY_FLOAT  # 今日最低价
-                tick.preClosePrice = EMPTY_FLOAT
+                tick.preClosePrice = EMPTY_FLOAT  # 前一天收盘价
 
                 tick.upperLimit = EMPTY_FLOAT  # 涨停价
                 tick.lowerLimit = EMPTY_FLOAT  # 跌停价
 
                 # 五档行情
-                tick.bidPrice1 = EMPTY_FLOAT
-                tick.bidPrice2 = EMPTY_FLOAT
-                tick.bidPrice3 = EMPTY_FLOAT
+                tick.bidPrice1 = float(d['bidPrice1'])
+                tick.bidPrice2 = float(d['bidPrice2'])
+                tick.bidPrice3 = float(d['bidPrice3'])
                 tick.bidPrice4 = EMPTY_FLOAT
                 tick.bidPrice5 = EMPTY_FLOAT
 
-                tick.askPrice1 = EMPTY_FLOAT
-                tick.askPrice2 = EMPTY_FLOAT
-                tick.askPrice3 = EMPTY_FLOAT
+                tick.askPrice1 = float(d['askPrice1'])
+                tick.askPrice2 = float(d['askPrice2'])
+                tick.askPrice3 = float(d['askPrice3'])
                 tick.askPrice4 = EMPTY_FLOAT
                 tick.askPrice5 = EMPTY_FLOAT
 
-                tick.bidVolume1 = EMPTY_INT
-                tick.bidVolume2 = EMPTY_INT
-                tick.bidVolume3 = EMPTY_INT
+                tick.bidVolume1 = float(d['bidVolume1'])
+                tick.bidVolume2 = float(d['bidVolume2'])
+                tick.bidVolume3 = float(d['bidVolume3'])
                 tick.bidVolume4 = EMPTY_INT
                 tick.bidVolume5 = EMPTY_INT
 
-                tick.askVolume1 = EMPTY_INT
-                tick.askVolume2 = EMPTY_INT
-                tick.askVolume3 = EMPTY_INT
+                tick.askVolume1 = float(d['askVolume1'])
+                tick.askVolume2 = float(d['askVolume2'])
+                tick.askVolume3 = float(d['askVolume3'])
                 tick.askVolume4 = EMPTY_INT
                 tick.askVolume5 = EMPTY_INT
-
-
+                self.dbCursor.append(tick)
+        self.output(u'载入完成，数据量：%s' % (self.dbCursor.__len__()))
+    # def setDataFrameData(self , file_name):
+    #     from pandas import  DataFrame,read_csv
+    #     self.dbCursor = read_csv(file_name)
+    #     self.dbCursor = self.dbCursor.sort_values(by = datetime,ascending= True )
 
     # ----------------------------------------------------------------------
     def runBacktesting(self):
         """运行回测"""
         # 载入历史数据
-        self.loadHistoryData()
+        #self.loadHistoryData()
 
         # 首先根据回测模式，确认要使用的数据类
         if self.mode == self.BAR_MODE:
@@ -527,22 +501,7 @@ class BacktestingEngine(object):
         pass
 
     # ----------------------------------------------------------------------
-    def loadBar(self, dbName, collectionName, startDate):
-        """直接返回初始化数据列表中的Bar"""
-        return self.initData
 
-    # ----------------------------------------------------------------------
-    def loadTick(self, dbName, collectionName, startDate):
-        """直接返回初始化数据列表中的Tick"""
-        return self.initData
-
-    # ----------------------------------------------------------------------
-    def writeCtaLog(self, content):
-        """记录日志"""
-        log = str(self.dt) + ' ' + content
-        self.logList.append(log)
-
-    # ----------------------------------------------------------------------
     def output(self, content):
         """输出内容"""
         print str(datetime.now()) + "\t" + content
@@ -797,9 +756,6 @@ class BacktestingEngine(object):
         plt.show()
 
     # ----------------------------------------------------------------------
-    def putStrategyEvent(self, name):
-        """发送策略更新事件，回测中忽略"""
-        pass
 
     # ----------------------------------------------------------------------
     def setSlippage(self, slippage):

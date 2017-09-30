@@ -8,7 +8,6 @@ from Back_test.event.vtEvent import *
 from Back_test.vtConstant import *
 from Back_test.vtObject import *
 
-
 ########################################################################
 class VtGateway(object):
     """交易接口"""

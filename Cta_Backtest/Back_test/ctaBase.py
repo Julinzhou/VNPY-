@@ -8,8 +8,8 @@ from __future__ import division
 
 # 常量定义
 # CTA引擎中涉及到的交易方向类型
-CTAORDER_BUY = u'买开'
-CTAORDER_SELL = u'卖平'
+CTAORDER_BUY =   u'买开'
+CTAORDER_SELL =  u'卖平'
 CTAORDER_SHORT = u'卖开'
 CTAORDER_COVER = u'买平'
 
