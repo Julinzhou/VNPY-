@@ -13,7 +13,7 @@
 import talib
 import numpy as np
 
-from Back_test.vtObject import VtBarData
+from Back_test.vtObject import VtBarData ,VtTickData
 from Back_test.vtConstant import EMPTY_STRING
 from strategy.ctaTemplate import CtaTemplate
 
@@ -86,7 +86,7 @@ class AtrRsiStrategy(CtaTemplate):
         # 否则会出现多个策略实例之间数据共享的情况，有可能导致潜在的策略逻辑错误风险，
         # 策略类中的这些可变对象属性可以选择不写，全都放在__init__下面，写主要是为了阅读
         # 策略时方便（更多是个编程习惯的选择）
-
+        self.tick = VtTickData()
     # ----------------------------------------------------------------------
     def onInit(self):
         """初始化策略（必须由用户继承实现）"""
@@ -106,19 +106,16 @@ class AtrRsiStrategy(CtaTemplate):
     # ----------------------------------------------------------------------
     def onStart(self):
         """启动策略（必须由用户继承实现）"""
-        self.writeCtaLog(u'%s策略启动' % self.name)
-        self.putEvent()
-
+        pass
     # ----------------------------------------------------------------------
     def onStop(self):
-        """停止策略（必须由用户继承实现）"""
-        self.writeCtaLog(u'%s策略停止' % self.name)
-        self.putEvent()
+        pass
 
     # ----------------------------------------------------------------------
     def onTick(self, tick):
         """收到行情TICK推送（必须由用户继承实现）"""
         # 计算K线
+        self.tick = tick
         tickMinute = tick.datetime.minute
 
         if tickMinute != self.barMinute:
@@ -195,7 +192,7 @@ class AtrRsiStrategy(CtaTemplate):
 
             # ATR数值上穿其移动平均线，说明行情短期内波动加大
             # 即处于趋势的概率较大，适合CTA开仓
-            if self.atrValue > self.atrMa:
+            if self.atrValue > self.atrMa and self.tick.askVolume1 < self.tick.bidVolume1 :
                 # 使用RSI指标的趋势行情时，会在超买超卖区钝化特征，作为开仓信号
                 if self.rsiValue > self.rsiBuy:
                     # 这里为了保证成交，选择超价5个整指数点下单

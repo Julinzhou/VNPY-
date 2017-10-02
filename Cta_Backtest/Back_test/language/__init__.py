@@ -10,3 +10,4 @@ from .chinese import text, constant
 from Back_test.vtGlobal import globalSetting
 if globalSetting['language'] == 'english':
     from .english import text, constant
+

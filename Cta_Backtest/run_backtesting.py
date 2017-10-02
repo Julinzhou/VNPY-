@@ -14,7 +14,7 @@ if __name__ == '__main__':
     engine = BacktestingEngine()
 
     # 设置引擎的回测模式为K线
-    engine.setBacktestingMode(engine.BAR_MODE)
+    engine.setBacktestingMode(engine.TICK_MODE)
 
     # 设置回测用的数据起始日期
     engine.setStartDate('20120101')
@@ -34,8 +34,8 @@ if __name__ == '__main__':
 
     Data_path = os.path.join(os.getcwd(),'Test_data')   # 获取数据文件夹地址
 
-    file_name = os.path.join(Data_path , 'IF0000_1.min.csv')    # 获取回测数据绝对地址
-    engine.setDatafile(file_name)  # file_name为储存的数据文件 ，放在Test_data文件夹中，并且为csv格式
+    file_name = os.path.join(Data_path , 'IFMI_201004.csv')    # 获取回测数据绝对地址
+    engine.setDatafile(file_name,'IFMI')  # file_name为储存的数据文件 ，放在Test_data文件夹中，并且为csv格式
     # 开始跑回测                   #csv必须包含字段
     engine.runBacktesting()
 

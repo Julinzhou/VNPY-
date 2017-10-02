@@ -7,3 +7,4 @@ d = locals()
 for name in dir(constant):
     if '__' not in name:
         d[name] = constant.__getattribute__(name)
+        print (name,d[name])
